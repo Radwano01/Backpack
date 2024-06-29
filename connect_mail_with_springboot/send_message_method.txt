@@ -1,0 +1,7 @@
+public SimpleMailMessage sendMessageToEmail(String email, String message){
+        SimpleMailMessage mailMessage = new SimpleMailMessage();
+        mailMessage.setTo(email);
+        mailMessage.setSubject("Email Verification From Hackathon Project");
+        mailMessage.setText("Please Click to the link to verify your account: "+message);
+        return mailMessage;
+}

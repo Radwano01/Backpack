@@ -1,0 +1,14 @@
+@Configuration
+@EnableWebMvc
+public class WebConfig implements WebMvcConfigurer {
+
+    @Value("${FRONTEND_API}")
+    private String frontendAPI;
+
+    @Override
+    public void addCorsMappings(CorsRegistry registry) {
+        registry.addMapping("/**")
+                .allowedOrigins(frontendAPI)
+                .allowedMethods("*");
+    }
+}

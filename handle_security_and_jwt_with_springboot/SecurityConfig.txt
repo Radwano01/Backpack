@@ -1,0 +1,61 @@
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+    private final CustomUserDetailsService customUserDetailsService;
+    private final JWTAuthEntryPoint jwtAuthEntryPoint;
+    private final RoleRepository roleRepository;
+
+    @Autowired
+    public SecurityConfig(CustomUserDetailsService customUserDetailsService,
+                          JWTAuthEntryPoint jwtAuthEntryPoint,
+                          RoleRepository roleRepository){
+        this.customUserDetailsService = customUserDetailsService;
+        this.jwtAuthEntryPoint = jwtAuthEntryPoint;
+        this.roleRepository = roleRepository;
+    }
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception{
+        http
+                .csrf(AbstractHttpConfigurer::disable)
+                .exceptionHandling(configure-> configure.authenticationEntryPoint(jwtAuthEntryPoint))
+                .sessionManagement(configure-> configure.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeHttpRequests(authorizeRequests ->
+                        authorizeRequests
+                                .requestMatchers("/api/v1/**").permitAll()
+                                .anyRequest().authenticated()
+                )
+                .httpBasic(withDefaults());
+        http.addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+        return authenticationConfiguration.getAuthenticationManager();
+    }
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
+    }
+
+    @Bean
+    public JWTAuthenticationFilter jwtAuthenticationFilter() {
+        return new JWTAuthenticationFilter();
+    }
+
+    @PostConstruct
+    public void role(){
+        RoleEntity userRole = new RoleEntity("USER");
+        boolean existsUserRole = roleRepository.existsByRole(userRole.getRole());
+        if(!existsUserRole){
+            roleRepository.save(userRole);
+        }
+
+        RoleEntity adminRole = new RoleEntity("ADMIN");
+        boolean existsAdminRole = roleRepository.existsByRole(adminRole.getRole());
+        if(!existsAdminRole){
+            roleRepository.save(adminRole);
+        }
+    }
+}
